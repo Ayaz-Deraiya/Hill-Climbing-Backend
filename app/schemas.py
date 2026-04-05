@@ -6,6 +6,7 @@ class OptimizationRequest(BaseModel):
     capacity: int
     algorithm: str  # "hc"
     max_iter: Optional[int] = 500
+    verify_optimal: Optional[bool] = False
 
 class BinResponse(BaseModel):
     items: List[int]
@@ -15,9 +16,9 @@ class BinResponse(BaseModel):
 class OptimizationResult(BaseModel):
     algorithm: str
     bins: List[BinResponse]
-    cost_history: List[float]
+    history: List[float]
     num_bins: int
-    final_cost: float
+    optimal_bins: Optional[int] = None
     time_ms: Optional[float] = None
 
 class BatchCompareRequest(BaseModel):

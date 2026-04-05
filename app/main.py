@@ -24,7 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-def format_solution(solution, algorithm_name, history):
+def format_solution(solution, algorithm_name, history, optimal_bins=None):
     bins = [
         BinResponse(items=b.items, used=b.used, capacity=b.capacity)
         for b in solution.bins
@@ -32,9 +32,9 @@ def format_solution(solution, algorithm_name, history):
     return OptimizationResult(
         algorithm=algorithm_name,
         bins=bins,
-        cost_history=history,
+        history=history,
         num_bins=len(solution.bins),
-        final_cost=solution.cost()
+        optimal_bins=optimal_bins
     )
 
 @app.post("/optimize", response_model=OptimizationResult)
@@ -42,7 +42,14 @@ async def optimize(request: OptimizationRequest):
     if request.algorithm == "hc":
         solver = HillClimbing(request.capacity)
         solution, history = solver.optimize(request.items, max_iter=request.max_iter)
-        return format_solution(solution, "Hill Climbing", history)
+        
+        optimal_bins = None
+        if request.verify_optimal:
+            bt_solver = BacktrackingBinPacking(request.capacity)
+            bt_sol, _ = bt_solver.optimize(request.items)
+            optimal_bins = len(bt_sol.bins)
+            
+        return format_solution(solution, "Hill Climbing", history, optimal_bins=optimal_bins)
     else:
         raise HTTPException(status_code=400, detail="Invalid algorithm. Use 'hc'.")
 
